@@ -7,7 +7,9 @@ authors = [
     { name = "CFF Macbook", email = "emir9596@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.3.8",
+]
 
 [project.scripts]
 dubai-property-analytics = "dubai_property_analytics:main"
@@ -30,3 +32,5 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["integration: need running Postgres (docker compose up -d)"]
+addopts = "-m 'not integration'"
