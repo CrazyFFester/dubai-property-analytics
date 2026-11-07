@@ -1,7 +1,7 @@
 [project]
 name = "dubai-property-analytics"
 version = "0.1.0"
-description = "Add your description here"
+description = "Dubai real estate analytics: DLD Open Data → PostgreSQL pipeline, EDA and price modeling"
 readme = "README.md"
 authors = [
     { name = "CFF Macbook", email = "emir9596@gmail.com" }
@@ -21,3 +21,12 @@ dev = [
     "pytest>=9.2.0",
     "ruff>=0.17.4",
 ]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
