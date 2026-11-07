@@ -12,7 +12,10 @@ Python 3.13 · uv · PostgreSQL (Docker) · pytest · Ruff
 - [ ] Price modeling
 
 ## Setup
-​```bash
+```bash
+cp .env.example .env
+docker compose up -d
 uv sync
-uv run pytest
-​```
+uv run pytest                                  # unit tests
+uv run --env-file .env pytest -m integration   # needs Postgres
+```
