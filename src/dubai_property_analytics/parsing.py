@@ -26,3 +26,29 @@ def _none_if_empty(s: str) -> str | None:
     if not cleaned:
         return None
     return cleaned
+
+
+def _decimal_or_none(s: str) -> Decimal | None:
+    cleaned: str | None = _none_if_empty(s)
+    if cleaned is None:
+        return None
+    return Decimal(cleaned)
+
+
+def parse_row(row: dict[str, str]) -> Transaction:
+    return Transaction(
+        transaction_number=row["TRANSACTION_NUMBER"],
+        date=datetime.fromisoformat(row["INSTANCE_DATE"]),
+        procedure=row["PROCEDURE_EN"],
+        is_offplan=row["IS_OFFPLAN_EN"] == "Off-Plan",
+        is_freehold=row["IS_FREE_HOLD_EN"] == "Free Hold",
+        usage=row["USAGE_EN"],
+        area=row["AREA_EN"],
+        property_type=row["PROP_TYPE_EN"],
+        property_subtype=_none_if_empty(row["PROP_SB_TYPE_EN"]),
+        value_aed=Decimal(row["TRANS_VALUE"]),
+        actual_area_sqm=_decimal_or_none(row["ACTUAL_AREA"]),
+        rooms=_none_if_empty(row["ROOMS_EN"]),
+        project=_none_if_empty(row["PROJECT_EN"]),
+        master_project=_none_if_empty(row["MASTER_PROJECT_EN"]),
+    )
