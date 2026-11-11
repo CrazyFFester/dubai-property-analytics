@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 
 @dataclass(frozen=True)
@@ -28,15 +28,29 @@ def _none_if_empty(s: str) -> str | None:
     return cleaned
 
 
+def _decimal(s: str) -> Decimal:
+    cleaned: str = s.strip()
+
+    try:
+        decimal = Decimal(cleaned)
+    except InvalidOperation as e:
+        raise ValueError(f"Not a decimal {s!r}") from e
+
+    if not decimal.is_finite():
+        raise ValueError(f"Not a finite decimal {s!r}")
+
+    return decimal
+
+
 def _decimal_or_none(s: str) -> Decimal | None:
     cleaned: str | None = _none_if_empty(s)
     if cleaned is None:
         return None
-    return Decimal(cleaned)
+    return _decimal(cleaned)
 
 
 def _bool_from(value: str, *, true: str, false: str) -> bool:
-    cleaned = value.strip()
+    cleaned: str = value.strip()
 
     if cleaned == true:
         return True
@@ -60,7 +74,7 @@ def parse_row(row: dict[str, str]) -> Transaction:
         area=row["AREA_EN"],
         property_type=row["PROP_TYPE_EN"],
         property_subtype=_none_if_empty(row["PROP_SB_TYPE_EN"]),
-        value_aed=Decimal(row["TRANS_VALUE"]),
+        value_aed=_decimal(row["TRANS_VALUE"]),
         actual_area_sqm=_decimal_or_none(row["ACTUAL_AREA"]),
         rooms=_none_if_empty(row["ROOMS_EN"]),
         project=_none_if_empty(row["PROJECT_EN"]),
