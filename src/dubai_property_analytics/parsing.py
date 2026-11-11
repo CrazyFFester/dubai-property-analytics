@@ -35,13 +35,27 @@ def _decimal_or_none(s: str) -> Decimal | None:
     return Decimal(cleaned)
 
 
+def _bool_from(value: str, *, true: str, false: str) -> bool:
+    cleaned = value.strip()
+
+    if cleaned == true:
+        return True
+    if cleaned == false:
+        return False
+    raise ValueError(f"expected {true!r} or {false!r}, got {value!r}")
+
+
 def parse_row(row: dict[str, str]) -> Transaction:
     return Transaction(
         transaction_number=row["TRANSACTION_NUMBER"],
         date=datetime.fromisoformat(row["INSTANCE_DATE"]),
         procedure=row["PROCEDURE_EN"],
-        is_offplan=row["IS_OFFPLAN_EN"] == "Off-Plan",
-        is_freehold=row["IS_FREE_HOLD_EN"] == "Free Hold",
+        is_offplan=_bool_from(
+            row["IS_OFFPLAN_EN"], true="Off-Plan", false="Ready"
+        ),
+        is_freehold=_bool_from(
+            row["IS_FREE_HOLD_EN"], true="Free Hold", false="Non Free Hold"
+        ),
         usage=row["USAGE_EN"],
         area=row["AREA_EN"],
         property_type=row["PROP_TYPE_EN"],
