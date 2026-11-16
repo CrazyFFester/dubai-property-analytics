@@ -65,9 +65,20 @@ class TestDecimal:
     def test_valid(self, value: str, expected: Decimal) -> None:
         assert _decimal(value) == expected
 
-    @pytest.mark.parametrize("value", ["abc", "", "1,5", "NaN", "Infinity", "-inf", "sNaN"])
+    @pytest.mark.parametrize(
+        ("value", "match"),
+        [
+            ("abc", "Not a decimal"),
+            ("", "Not a decimal"),
+            ("1,5", "Not a decimal"),
+            ("NaN", "Not a finite decimal"),
+            ("Infinity", "Not a finite decimal"),
+            ("-inf", "Not a finite decimal"),
+            ("sNaN", "Not a finite decimal"),
+        ],
+    )
     def test_invalid(self, value: str, match: str) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=match):
             _decimal(value)
 
 
