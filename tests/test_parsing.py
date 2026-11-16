@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 import pytest
@@ -48,7 +49,9 @@ class TestBoolFrom:
         ],
     )
     def test_invalid(self, value: str, true: str, false: str) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match=re.escape(f"expected {true!r} or {false!r}, got {value!r}")
+        ):
             _bool_from(value, true=true, false=false)
 
 
