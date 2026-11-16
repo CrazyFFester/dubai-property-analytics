@@ -4,10 +4,10 @@ from decimal import Decimal
 import pytest
 
 from dubai_property_analytics.parsing import (
-    _bool_from,
-    _decimal,
-    _decimal_or_none,
     _none_if_empty,
+    _parse_bool,
+    _parse_decimal,
+    _parse_optional_decimal,
 )
 
 
@@ -25,9 +25,9 @@ class TestNoneIfEmpty:
         assert _none_if_empty(raw) == expected
 
 
-class TestBoolFrom:
+class TestParseBool:
     @pytest.mark.parametrize(
-        ("value", "true", "false", "expected"),
+        ("raw", "true", "false", "expected"),
         [
             ("Off-Plan", "Off-Plan", "Ready", True),
             (" Off-Plan ", "Off-Plan", "Ready", True),
@@ -36,11 +36,11 @@ class TestBoolFrom:
             ("Non Free Hold", "Free Hold", "Non Free Hold", False),
         ],
     )
-    def test_valid(self, value: str, true: str, false: str, expected: bool) -> None:
-        assert _bool_from(value, true=true, false=false) == expected
+    def test_valid(self, raw: str, true: str, false: str, expected: bool) -> None:
+        assert _parse_bool(raw, true=true, false=false) == expected
 
     @pytest.mark.parametrize(
-        ("value", "true", "false"),
+        ("raw", "true", "false"),
         [
             ("", "Off-Plan", "Ready"),
             ("Off-plan", "Off-Plan", "Ready"),
@@ -48,16 +48,16 @@ class TestBoolFrom:
             ("Free Hold", "Off-Plan", "Ready"),
         ],
     )
-    def test_invalid(self, value: str, true: str, false: str) -> None:
+    def test_invalid(self, raw: str, true: str, false: str) -> None:
         with pytest.raises(
-            ValueError, match=re.escape(f"expected {true!r} or {false!r}, got {value!r}")
+            ValueError, match=re.escape(f"expected {true!r} or {false!r}, got {raw!r}")
         ):
-            _bool_from(value, true=true, false=false)
+            _parse_bool(raw, true=true, false=false)
 
 
-class TestDecimal:
+class TestParseDecimal:
     @pytest.mark.parametrize(
-        ("value", "expected"),
+        ("raw", "expected"),
         [
             ("20", Decimal("20")),
             ("20.5", Decimal("20.5")),
@@ -65,11 +65,11 @@ class TestDecimal:
             (" 20 ", Decimal("20")),
         ],
     )
-    def test_valid(self, value: str, expected: Decimal) -> None:
-        assert _decimal(value) == expected
+    def test_valid(self, raw: str, expected: Decimal) -> None:
+        assert _parse_decimal(raw) == expected
 
     @pytest.mark.parametrize(
-        ("value", "match"),
+        ("raw", "match"),
         [
             ("abc", "Not a decimal"),
             ("", "Not a decimal"),
@@ -80,22 +80,20 @@ class TestDecimal:
             ("sNaN", "Not a finite decimal"),
         ],
     )
-    def test_invalid(self, value: str, match: str) -> None:
+    def test_invalid(self, raw: str, match: str) -> None:
         with pytest.raises(ValueError, match=match):
-            _decimal(value)
+            _parse_decimal(raw)
 
 
-class TestDecimalOrNone:
-    @pytest.mark.parametrize(
-        ("value", "expected"), [("", None), ("20", Decimal("20")), (" ", None)]
-    )
-    def test_valid(self, value: str, expected: Decimal | None) -> None:
-        assert _decimal_or_none(value) == expected
+class TestParseOptionalDecimal:
+    @pytest.mark.parametrize(("raw", "expected"), [("", None), ("20", Decimal("20")), (" ", None)])
+    def test_valid(self, raw: str, expected: Decimal | None) -> None:
+        assert _parse_optional_decimal(raw) == expected
 
     @pytest.mark.parametrize(
-        ("value", "match"),
+        ("raw", "match"),
         [("NaN", "Not a finite decimal"), ("abc", "Not a decimal")],
     )
-    def test_invalid(self, value: str, match: str) -> None:
+    def test_invalid(self, raw: str, match: str) -> None:
         with pytest.raises(ValueError, match=match):
-            _decimal_or_none(value)
+            _parse_optional_decimal(raw)
