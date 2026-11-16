@@ -28,9 +28,10 @@ dev = [
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["E", "F", "I", "UP", "B", "PT", "SIM", "RUF", "C4"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["integration: need running Postgres (docker compose up -d)"]
-addopts = "-m 'not integration'"
+markers = ["integration: needs running Postgres (docker compose up -d)"]
+addopts = "-ra --strict-markers -m 'not integration'"
+xfail_strict = true

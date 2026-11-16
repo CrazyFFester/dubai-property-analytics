@@ -12,7 +12,7 @@ from dubai_property_analytics.parsing import (
 
 class TestNoneIfEmpty:
     @pytest.mark.parametrize(
-        "raw, expected",
+        ("raw", "expected"),
         [
             ("", None),
             ("  ", None),
@@ -26,7 +26,7 @@ class TestNoneIfEmpty:
 
 class TestBoolFrom:
     @pytest.mark.parametrize(
-        "value, true, false, expected",
+        ("value", "true", "false", "expected"),
         [
             ("Off-Plan", "Off-Plan", "Ready", True),
             (" Off-Plan ", "Off-Plan", "Ready", True),
@@ -39,7 +39,7 @@ class TestBoolFrom:
         assert _bool_from(value, true=true, false=false) == expected
 
     @pytest.mark.parametrize(
-        "value, true, false",
+        ("value", "true", "false"),
         [
             ("", "Off-Plan", "Ready"),
             ("Off-plan", "Off-Plan", "Ready"),
@@ -54,7 +54,7 @@ class TestBoolFrom:
 
 class TestDecimal:
     @pytest.mark.parametrize(
-        "value, expected",
+        ("value", "expected"),
         [
             ("20", Decimal("20")),
             ("20.5", Decimal("20.5")),
@@ -66,18 +66,20 @@ class TestDecimal:
         assert _decimal(value) == expected
 
     @pytest.mark.parametrize("value", ["abc", "", "1,5", "NaN", "Infinity", "-inf", "sNaN"])
-    def test_invalid(self, value: str) -> None:
+    def test_invalid(self, value: str, match: str) -> None:
         with pytest.raises(ValueError):
             _decimal(value)
 
 
 class TestDecimalOrNone:
-    @pytest.mark.parametrize("value, expected", [("", None), ("20", Decimal("20")), (" ", None)])
+    @pytest.mark.parametrize(
+        ("value", "expected"), [("", None), ("20", Decimal("20")), (" ", None)]
+    )
     def test_valid(self, value: str, expected: Decimal | None) -> None:
         assert _decimal_or_none(value) == expected
 
     @pytest.mark.parametrize(
-        "value, match",
+        ("value", "match"),
         [("NaN", "Not a finite decimal"), ("abc", "Not a decimal")],
     )
     def test_invalid(self, value: str, match: str) -> None:
