@@ -64,12 +64,8 @@ def parse_row(row: dict[str, str]) -> Transaction:
         transaction_number=row["TRANSACTION_NUMBER"],
         date=datetime.fromisoformat(row["INSTANCE_DATE"]),
         procedure=row["PROCEDURE_EN"],
-        is_offplan=_bool_from(
-            row["IS_OFFPLAN_EN"], true="Off-Plan", false="Ready"
-        ),
-        is_freehold=_bool_from(
-            row["IS_FREE_HOLD_EN"], true="Free Hold", false="Non Free Hold"
-        ),
+        is_offplan=_bool_from(row["IS_OFFPLAN_EN"], true="Off-Plan", false="Ready"),
+        is_freehold=_bool_from(row["IS_FREE_HOLD_EN"], true="Free Hold", false="Non Free Hold"),
         usage=row["USAGE_EN"],
         area=row["AREA_EN"],
         property_type=row["PROP_TYPE_EN"],
