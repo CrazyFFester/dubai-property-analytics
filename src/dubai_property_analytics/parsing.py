@@ -15,7 +15,7 @@ class Transaction:
     property_type: str
     property_subtype: str | None
     value_aed: Decimal
-    actual_area_sqm: Decimal | None
+    actual_area_sqm: Decimal
     rooms: str | None
     project: str | None
     master_project: str | None
@@ -42,13 +42,6 @@ def _parse_decimal(raw: str) -> Decimal:
     return number
 
 
-def _parse_optional_decimal(raw: str) -> Decimal | None:
-    cleaned: str | None = _none_if_empty(raw)
-    if cleaned is None:
-        return None
-    return _parse_decimal(cleaned)
-
-
 def _parse_bool(raw: str, *, true: str, false: str) -> bool:
     cleaned: str = raw.strip()
 
@@ -71,7 +64,7 @@ def parse_row(row: dict[str, str]) -> Transaction:
         property_type=row["PROP_TYPE_EN"],
         property_subtype=_none_if_empty(row["PROP_SB_TYPE_EN"]),
         value_aed=_parse_decimal(row["TRANS_VALUE"]),
-        actual_area_sqm=_parse_optional_decimal(row["ACTUAL_AREA"]),
+        actual_area_sqm=_parse_decimal(row["ACTUAL_AREA"]),
         rooms=_none_if_empty(row["ROOMS_EN"]),
         project=_none_if_empty(row["PROJECT_EN"]),
         master_project=_none_if_empty(row["MASTER_PROJECT_EN"]),

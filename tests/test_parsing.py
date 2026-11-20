@@ -7,7 +7,6 @@ from dubai_property_analytics.parsing import (
     _none_if_empty,
     _parse_bool,
     _parse_decimal,
-    _parse_optional_decimal,
 )
 
 
@@ -83,17 +82,3 @@ class TestParseDecimal:
     def test_invalid(self, raw: str, match: str) -> None:
         with pytest.raises(ValueError, match=match):
             _parse_decimal(raw)
-
-
-class TestParseOptionalDecimal:
-    @pytest.mark.parametrize(("raw", "expected"), [("", None), ("20", Decimal("20")), (" ", None)])
-    def test_valid(self, raw: str, expected: Decimal | None) -> None:
-        assert _parse_optional_decimal(raw) == expected
-
-    @pytest.mark.parametrize(
-        ("raw", "match"),
-        [("NaN", "Not a finite decimal"), ("abc", "Not a decimal")],
-    )
-    def test_invalid(self, raw: str, match: str) -> None:
-        with pytest.raises(ValueError, match=match):
-            _parse_optional_decimal(raw)
