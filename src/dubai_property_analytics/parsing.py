@@ -6,12 +6,12 @@ from decimal import Decimal, InvalidOperation
 @dataclass(frozen=True)
 class Transaction:
     transaction_number: str
-    date: datetime
+    instance_date: datetime
     procedure: str
     is_offplan: bool
     is_freehold: bool
     usage: str
-    area: str
+    area_name: str
     property_type: str
     property_subtype: str | None
     value_aed: Decimal
@@ -62,12 +62,12 @@ def _parse_bool(raw: str, *, true: str, false: str) -> bool:
 def parse_row(row: dict[str, str]) -> Transaction:
     return Transaction(
         transaction_number=row["TRANSACTION_NUMBER"],
-        date=datetime.fromisoformat(row["INSTANCE_DATE"]),
+        instance_date=datetime.fromisoformat(row["INSTANCE_DATE"]),
         procedure=row["PROCEDURE_EN"],
         is_offplan=_parse_bool(row["IS_OFFPLAN_EN"], true="Off-Plan", false="Ready"),
         is_freehold=_parse_bool(row["IS_FREE_HOLD_EN"], true="Free Hold", false="Non Free Hold"),
         usage=row["USAGE_EN"],
-        area=row["AREA_EN"],
+        area_name=row["AREA_EN"],
         property_type=row["PROP_TYPE_EN"],
         property_subtype=_none_if_empty(row["PROP_SB_TYPE_EN"]),
         value_aed=_parse_decimal(row["TRANS_VALUE"]),
