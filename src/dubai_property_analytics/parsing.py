@@ -1,6 +1,27 @@
+from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from enum import StrEnum, unique
+from functools import partial
+
+
+@unique
+class Column(StrEnum):
+    TRANSACTION_NUMBER = "TRANSACTION_NUMBER"
+    INSTANCE_DATE = "INSTANCE_DATE"
+    PROCEDURE_EN = "PROCEDURE_EN"
+    IS_OFFPLAN_EN = "IS_OFFPLAN_EN"
+    IS_FREE_HOLD_EN = "IS_FREE_HOLD_EN"
+    USAGE_EN = "USAGE_EN"
+    AREA_EN = "AREA_EN"
+    PROP_TYPE_EN = "PROP_TYPE_EN"
+    PROP_SB_TYPE_EN = "PROP_SB_TYPE_EN"
+    TRANS_VALUE = "TRANS_VALUE"
+    ACTUAL_AREA = "ACTUAL_AREA"
+    ROOMS_EN = "ROOMS_EN"
+    PROJECT_EN = "PROJECT_EN"
+    MASTER_PROJECT_EN = "MASTER_PROJECT_EN"
 
 
 @dataclass(frozen=True)
@@ -19,6 +40,19 @@ class Transaction:
     rooms: str | None
     project: str | None
     master_project: str | None
+
+
+def check_header(fieldnames: Collection[str] | None) -> None:
+    missing = set(Column) - set(fieldnames or ())
+    if missing:
+        raise ValueError(f"CSV missing columns: {sorted(missing)}")
+
+
+def _require_str(raw: str) -> str:
+    cleaned = raw.strip()
+    if not cleaned:
+        raise ValueError("empty")
+    return cleaned
 
 
 def _none_if_empty(raw: str) -> str | None:
@@ -42,6 +76,13 @@ def _parse_decimal(raw: str) -> Decimal:
     return number
 
 
+def _parse_positive_decimal(raw: str) -> Decimal:
+    number = _parse_decimal(raw)
+    if number <= 0:
+        raise ValueError(f"msut be > 0, got {raw!r}")
+    return number
+
+
 def _parse_bool(raw: str, *, true: str, false: str) -> bool:
     cleaned: str = raw.strip()
 
@@ -50,6 +91,24 @@ def _parse_bool(raw: str, *, true: str, false: str) -> bool:
     if cleaned == false:
         return False
     raise ValueError(f"expected {true!r} or {false!r}, got {raw!r}")
+
+
+def _parse_datetime(raw: str) -> datetime:
+    return datetime.fromisoformat(raw.strip())
+
+
+__parse_offplan = partial(_parse_bool, true="Off-Plan", false="Ready")
+_parse_freehold = partial(_parse_bool, true="Free Hold", false="Non Free Hold")
+
+
+def _field[T](row: Mapping[str, str | None], col: Column, parse: Callable[[str], T]) -> T:
+    raw = row.get(col)
+    if raw is None:
+        raise ValueError(f"{col}: missing cell")
+    try:
+        return parse(raw)
+    except ValueError as e:
+        raise ValueError(f"{col}: {e}") from e
 
 
 def parse_row(row: dict[str, str]) -> Transaction:
