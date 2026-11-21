@@ -79,7 +79,7 @@ def _parse_decimal(raw: str) -> Decimal:
 def _parse_positive_decimal(raw: str) -> Decimal:
     number = _parse_decimal(raw)
     if number <= 0:
-        raise ValueError(f"msut be > 0, got {raw!r}")
+        raise ValueError(f"must be > 0, got {raw!r}")
     return number
 
 
@@ -97,7 +97,7 @@ def _parse_datetime(raw: str) -> datetime:
     return datetime.fromisoformat(raw.strip())
 
 
-__parse_offplan = partial(_parse_bool, true="Off-Plan", false="Ready")
+_parse_offplan = partial(_parse_bool, true="Off-Plan", false="Ready")
 _parse_freehold = partial(_parse_bool, true="Free Hold", false="Non Free Hold")
 
 
@@ -111,20 +111,20 @@ def _field[T](row: Mapping[str, str | None], col: Column, parse: Callable[[str],
         raise ValueError(f"{col}: {e}") from e
 
 
-def parse_row(row: dict[str, str]) -> Transaction:
+def parse_row(row: Mapping[str, str | None]) -> Transaction:
     return Transaction(
-        transaction_number=row["TRANSACTION_NUMBER"],
-        instance_date=datetime.fromisoformat(row["INSTANCE_DATE"]),
-        procedure=row["PROCEDURE_EN"],
-        is_offplan=_parse_bool(row["IS_OFFPLAN_EN"], true="Off-Plan", false="Ready"),
-        is_freehold=_parse_bool(row["IS_FREE_HOLD_EN"], true="Free Hold", false="Non Free Hold"),
-        usage=row["USAGE_EN"],
-        area_name=row["AREA_EN"],
-        property_type=row["PROP_TYPE_EN"],
-        property_subtype=_none_if_empty(row["PROP_SB_TYPE_EN"]),
-        value_aed=_parse_decimal(row["TRANS_VALUE"]),
-        actual_area_sqm=_parse_decimal(row["ACTUAL_AREA"]),
-        rooms=_none_if_empty(row["ROOMS_EN"]),
-        project=_none_if_empty(row["PROJECT_EN"]),
-        master_project=_none_if_empty(row["MASTER_PROJECT_EN"]),
+        transaction_number=_field(row, Column.TRANSACTION_NUMBER, _require_str),
+        instance_date=_field(row, Column.INSTANCE_DATE, _parse_datetime),
+        procedure=_field(row, Column.PROCEDURE_EN, _require_str),
+        is_offplan=_field(row, Column.IS_OFFPLAN_EN, _parse_offplan),
+        is_freehold=_field(row, Column.IS_FREE_HOLD_EN, _parse_freehold),
+        usage=_field(row, Column.USAGE_EN, _require_str),
+        area_name=_field(row, Column.AREA_EN, _require_str),
+        property_type=_field(row, Column.PROP_TYPE_EN, _require_str),
+        property_subtype=_field(row, Column.PROP_SB_TYPE_EN, _none_if_empty),
+        value_aed=_field(row, Column.TRANS_VALUE, _parse_positive_decimal),
+        actual_area_sqm=_field(row, Column.ACTUAL_AREA, _parse_positive_decimal),
+        rooms=_field(row, Column.ROOMS_EN, _none_if_empty),
+        project=_field(row, Column.PROJECT_EN, _none_if_empty),
+        master_project=_field(row, Column.MASTER_PROJECT_EN, _none_if_empty),
     )
