@@ -5,6 +5,7 @@ from decimal import Decimal
 import pytest
 
 from dubai_property_analytics.parsing import (
+    check_header,
     Column,
     Transaction,
     _none_if_empty,
@@ -32,6 +33,20 @@ def valid_row() -> dict[str, str | None]:
         Column.PROJECT_EN: "Marina Gate",
         Column.MASTER_PROJECT_EN: "",
     }
+
+
+class TestCheckHeader:
+    def test_all_present(self) -> None:
+        check_header(list(Column) + ["NEAREST_METRO_EN"])
+
+    def test_missing(self) -> None:
+        cols = [c for c in Column if c is not Column.AREA_EN]
+        with pytest.raises(ValueError, match="AREA_EN"):
+            check_header(cols)
+
+    def test_none(self) -> None:
+        with pytest.raises(ValueError, match="missing column"):
+            check_header(None)
 
 
 class TestParseRow:
