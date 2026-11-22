@@ -48,6 +48,36 @@ def check_header(fieldnames: Collection[str] | None) -> None:
         raise ValueError(f"CSV missing columns: {sorted(missing)}")
 
 
+def parse_row(row: Mapping[str, str | None]) -> Transaction:
+    return Transaction(
+        transaction_number=_field(row, Column.TRANSACTION_NUMBER, _require_str),
+        instance_date=_field(row, Column.INSTANCE_DATE, _parse_datetime),
+        procedure=_field(row, Column.PROCEDURE_EN, _require_str),
+        is_offplan=_field(row, Column.IS_OFFPLAN_EN, _parse_offplan),
+        is_freehold=_field(row, Column.IS_FREE_HOLD_EN, _parse_freehold),
+        usage=_field(row, Column.USAGE_EN, _require_str),
+        area_name=_field(row, Column.AREA_EN, _require_str),
+        property_type=_field(row, Column.PROP_TYPE_EN, _require_str),
+        property_subtype=_field(row, Column.PROP_SB_TYPE_EN, _none_if_empty),
+        value_aed=_field(row, Column.TRANS_VALUE, _parse_positive_decimal),
+        actual_area_sqm=_field(row, Column.ACTUAL_AREA, _parse_positive_decimal),
+        rooms=_field(row, Column.ROOMS_EN, _none_if_empty),
+        project=_field(row, Column.PROJECT_EN, _none_if_empty),
+        master_project=_field(row, Column.MASTER_PROJECT_EN, _none_if_empty),
+    )
+
+
+# Field parsers
+def _field[T](row: Mapping[str, str | None], col: Column, parse: Callable[[str], T]) -> T:
+    raw = row.get(col)
+    if raw is None:
+        raise ValueError(f"{col}: missing cell")
+    try:
+        return parse(raw)
+    except ValueError as e:
+        raise ValueError(f"{col}: {e}") from e
+
+
 def _require_str(raw: str) -> str:
     cleaned = raw.strip()
     if not cleaned:
@@ -83,6 +113,10 @@ def _parse_positive_decimal(raw: str) -> Decimal:
     return number
 
 
+def _parse_datetime(raw: str) -> datetime:
+    return datetime.fromisoformat(raw.strip())
+
+
 def _parse_bool(raw: str, *, true: str, false: str) -> bool:
     cleaned: str = raw.strip()
 
@@ -93,38 +127,5 @@ def _parse_bool(raw: str, *, true: str, false: str) -> bool:
     raise ValueError(f"expected {true!r} or {false!r}, got {raw!r}")
 
 
-def _parse_datetime(raw: str) -> datetime:
-    return datetime.fromisoformat(raw.strip())
-
-
 _parse_offplan = partial(_parse_bool, true="Off-Plan", false="Ready")
 _parse_freehold = partial(_parse_bool, true="Free Hold", false="Non Free Hold")
-
-
-def _field[T](row: Mapping[str, str | None], col: Column, parse: Callable[[str], T]) -> T:
-    raw = row.get(col)
-    if raw is None:
-        raise ValueError(f"{col}: missing cell")
-    try:
-        return parse(raw)
-    except ValueError as e:
-        raise ValueError(f"{col}: {e}") from e
-
-
-def parse_row(row: Mapping[str, str | None]) -> Transaction:
-    return Transaction(
-        transaction_number=_field(row, Column.TRANSACTION_NUMBER, _require_str),
-        instance_date=_field(row, Column.INSTANCE_DATE, _parse_datetime),
-        procedure=_field(row, Column.PROCEDURE_EN, _require_str),
-        is_offplan=_field(row, Column.IS_OFFPLAN_EN, _parse_offplan),
-        is_freehold=_field(row, Column.IS_FREE_HOLD_EN, _parse_freehold),
-        usage=_field(row, Column.USAGE_EN, _require_str),
-        area_name=_field(row, Column.AREA_EN, _require_str),
-        property_type=_field(row, Column.PROP_TYPE_EN, _require_str),
-        property_subtype=_field(row, Column.PROP_SB_TYPE_EN, _none_if_empty),
-        value_aed=_field(row, Column.TRANS_VALUE, _parse_positive_decimal),
-        actual_area_sqm=_field(row, Column.ACTUAL_AREA, _parse_positive_decimal),
-        rooms=_field(row, Column.ROOMS_EN, _none_if_empty),
-        project=_field(row, Column.PROJECT_EN, _none_if_empty),
-        master_project=_field(row, Column.MASTER_PROJECT_EN, _none_if_empty),
-    )
