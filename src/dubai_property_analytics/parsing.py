@@ -1,9 +1,13 @@
-from collections.abc import Callable, Collection, Mapping
+import csv
+import logging
+from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum, unique
 from functools import partial
+
+logger = logging.getLogger(__name__)
 
 
 @unique
@@ -65,6 +69,42 @@ def parse_row(row: Mapping[str, str | None]) -> Transaction:
         project=_field(row, Column.PROJECT_EN, _none_if_empty),
         master_project=_field(row, Column.MASTER_PROJECT_EN, _none_if_empty),
     )
+
+
+def parse_transactions(lines: Iterable[str]) -> list[Transaction]:
+    reader = csv.DictReader(lines)
+    check_header(reader.fieldnames)
+
+    seen: dict[str, Transaction] = {}
+    skipped = 0
+    dups = 0
+    conflicts = 0
+
+    for n, row in enumerate(reader, start=1):
+        try:
+            tx = parse_row(row)
+        except ValueError as e:
+            logger.warning("record %d: %s", n, e)
+            skipped += 1
+            continue
+
+        prev = seen.get(tx.transaction_number)
+
+        if prev is None:
+            seen[tx.transaction_number] = tx
+        elif prev == tx:
+            dups += 1
+        else:
+            logger.warning(
+                "record %d: conflicting duplicate %s, keeping first", n, tx.transaction_number
+            )
+            conflicts += 1
+
+    logger.info(
+        "parsed %d, skipped %d, duplicates %d, conflicts %d", len(seen), skipped, dups, conflicts
+    )
+
+    return list(seen.values())
 
 
 # Field parsers
