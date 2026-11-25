@@ -82,6 +82,10 @@ class TestParseRow:
     ) -> None:
         assert getattr(parse_row(valid_row | {col: " "}), attr) is None
 
+    @pytest.mark.parametrize("raw", ["NA", " NA "])
+    def test_rooms_na_is_none(self, valid_row: dict[str, str | None], raw: str) -> None:
+        assert parse_row(valid_row | {Column.ROOMS_EN: raw}).rooms is None
+
     @pytest.mark.parametrize(
         "col",
         [

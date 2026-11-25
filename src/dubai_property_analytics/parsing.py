@@ -61,7 +61,7 @@ def parse_row(row: Mapping[str, str | None]) -> Transaction:
         property_subtype=_field(row, Column.PROP_SB_TYPE_EN, _none_if_empty),
         value_aed=_field(row, Column.TRANS_VALUE, _parse_positive_decimal),
         actual_area_sqm=_field(row, Column.ACTUAL_AREA, _parse_positive_decimal),
-        rooms=_field(row, Column.ROOMS_EN, _none_if_empty),
+        rooms=_field(row, Column.ROOMS_EN, _none_if_missing),
         project=_field(row, Column.PROJECT_EN, _none_if_empty),
         master_project=_field(row, Column.MASTER_PROJECT_EN, _none_if_empty),
     )
@@ -88,6 +88,13 @@ def _require_str(raw: str) -> str:
 def _none_if_empty(raw: str) -> str | None:
     cleaned: str = raw.strip()
     if not cleaned:
+        return None
+    return cleaned
+
+
+def _none_if_missing(raw: str) -> str | None:
+    cleaned: str = raw.strip()
+    if cleaned in ("", "NA"):
         return None
     return cleaned
 
